@@ -1,14 +1,9 @@
-import logging
-import os
-import json
-import requests
-import sched
-import time
+import json, logging, os, requests, sched, sys, time
 from peewee import *
 from flask import Flask, jsonify, render_template, request
 from datetime import datetime
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(filename="/app/app.log", level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.info('==== Starting new run ====')
@@ -20,7 +15,7 @@ app = Flask(__name__)
 
 # Set up data folder - for the recorded streams
 if not 'DATA_DIR' in os.environ:
-    DATA_DIR = '/Users/magor/Drive/Dev/stream_recorder/backend'
+    DATA_DIR = '/data'
 else:
     if os.path.isdir(os.environ['DATA_DIR']):
         DATA_DIR = os.environ['DATA_DIR']
@@ -31,14 +26,17 @@ logging.info(f'Using data dir {DATA_DIR}.')
 
 
 # Set up config folder - for the Sqlite db and app logs
-if not 'CONFIG_DIR' in os.environ:
-    CONFIG_DIR = '/Users/magor/Drive/Dev/stream_recorder/backend/config'
-else:
+CONFIG_DIR = '/config'
+if 'CONFIG_DIR' in os.environ:    
     if os.path.isdir(os.environ['CONFIG_DIR']):
         CONFIG_DIR = os.environ['CONFIG_DIR']
     else:
-        logging.error(f'The specified {CONFIG_DIR} is not a valid folder.')
-        exit(1)
+        logging.info(f'The {CONFIG_DIR} not present or is not a valid folder.')
+        try:
+            os.makedirs(CONFIG_DIR)
+        except:
+            logging.error(f'Can\'t create {CONFIG_DIR}, this is required for the db, exiting.')
+            sys.exit(1)
 logging.info(f'Using config dir {CONFIG_DIR}.')
 
 app.config.update(dict(
@@ -121,18 +119,6 @@ def page_not_found(e):
     ''')
     return template.render(code=404)
 
-
-@app.before_request
-def before_request():
-  print(request)
-'''
-# Close db connection at end of request or in case of error
-@app.teardown_appcontext
-def close_db(error):
-    if hasattr(g, 'database'):
-        g.database.close()
-'''
-
 @app.route('/', methods=['OPTIONS'])
 def return_headers():
     return custom_response('')
@@ -192,8 +178,11 @@ def check_db():
     if not os.path.isfile(db_file):
         logging.info(f'Creating database {db_file} and the jobs table.')
         create_tables()
+        return custom_response(f'Created database {db_file}.')
     else:
         logging.info(f'Found database at {db_file}.')
+        return f'Using database at {db_file}.'
+
 
 if __name__ == "__main__":
     check_db()
