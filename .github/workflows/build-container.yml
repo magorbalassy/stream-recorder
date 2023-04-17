@@ -36,8 +36,16 @@ jobs:
     - run: npm run build --if-present
       working-directory: frontend
 
-    - name: Push Build to Releases  
-      uses: ncipollo/release-action@v1  
-      with:  
-        artifacts: "frontend/dist/stream-recorder"  
-        token: ${{ secrets.STREAM_RECORDER }}   
+    - name: copy build to backend folder
+      run: mkdir backend/frontend; cp -R frontend/dist/stream-recorder/* backend/frontend/
+        
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag stream-recorder:0.1
+      working-directory: backend
+      
+    - name: Publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@v5
+      with:
+        name: magorbalassy/stream-recorder
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
