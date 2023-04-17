@@ -41,7 +41,6 @@ jobs:
         
     - name: Build the Docker image
       run: docker build --tag stream-recorder:0.1 .
-      working-directory: backend
       
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@v5
