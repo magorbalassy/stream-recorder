@@ -37,10 +37,10 @@ jobs:
       working-directory: frontend
 
     - name: copy build to backend folder
-      run: mkdir backend/frontend; cp -R frontend/dist/stream-recorder/* backend/frontend/
+      run: mkdir backend/frontend; cp -Rv frontend/dist/stream-recorder/* backend/frontend/
         
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag stream-recorder:0.1
+      run: docker build --tag stream-recorder:0.1 .
       working-directory: backend
       
     - name: Publish to Registry
