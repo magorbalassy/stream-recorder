@@ -3,7 +3,7 @@ from peewee import *
 from flask import Flask, jsonify, render_template, request
 from datetime import datetime
 
-logging.basicConfig(filename="/app/app.log", level=logging.DEBUG,
+logging.basicConfig(filename="/dev/stdout", level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.info('==== Starting new run ====')
@@ -17,27 +17,37 @@ app = Flask(__name__)
 if not 'DATA_DIR' in os.environ:
     DATA_DIR = '/data'
 else:
-    if os.path.isdir(os.environ['DATA_DIR']):
-        DATA_DIR = os.environ['DATA_DIR']
-    else:
-        logging.error(f'{DATA_DIR} is not a valid folder.')
-        exit(1)
+    DATA_DIR = os.environ['DATA_DIR']
 logging.info(f'Using data dir {DATA_DIR}.')
-
+if not os.path.isdir(DATA_DIR):
+    logging.error(f'{DATA_DIR} is not present or it\'s not a valid folder.')
+    try:
+        os.makedirs(DATA_DIR)
+    except:
+        logging.error(f'Can\'t create {DATA_DIR}, this is required for the downloads, exiting.')
+        sys.exit(1)
+    logging.info(f'Created data folder {DATA_DIR}.')
+if not os.access(DATA_DIR, os.W_OK):
+    logging.error(f'{DATA_DIR} is not a writeable folder.')
+    exit(1)
 
 # Set up config folder - for the Sqlite db and app logs
-CONFIG_DIR = '/config'
-if 'CONFIG_DIR' in os.environ:    
-    if os.path.isdir(os.environ['CONFIG_DIR']):
-        CONFIG_DIR = os.environ['CONFIG_DIR']
-    else:
-        logging.info(f'The {CONFIG_DIR} not present or is not a valid folder.')
-        try:
-            os.makedirs(CONFIG_DIR)
-        except:
-            logging.error(f'Can\'t create {CONFIG_DIR}, this is required for the db, exiting.')
-            sys.exit(1)
+if not 'CONFIG_DIR' in os.environ:
+    CONFIG_DIR = '/config'
+else:
+    CONFIG_DIR = os.environ['CONFIG_DIR']
 logging.info(f'Using config dir {CONFIG_DIR}.')
+if not os.path.isdir(CONFIG_DIR):
+    logging.info(f'The {CONFIG_DIR} not present or it\'s not a valid folder.')
+    try:
+        os.makedirs(CONFIG_DIR)
+    except:
+        logging.error(f'Can\'t create {CONFIG_DIR}, this is required for the db, exiting.')
+        sys.exit(1)
+    logging.info(f'Created config folder {CONFIG_DIR}.')
+if not os.access(CONFIG_DIR, os.W_OK):
+        logging.error(f'{CONFIG_DIR} is not a writeable folder.')
+        exit(1)
 
 app.config.update(dict(
     DATABASE=os.path.join(CONFIG_DIR, 'jobs.db'),
@@ -45,6 +55,7 @@ app.config.update(dict(
     SECRET_KEY='development key'))
 
 db = SqliteDatabase(app.config['DATABASE'])
+
 
 def custom_response(msg):
   response = jsonify(msg)
@@ -174,10 +185,14 @@ def del_job():
 
 @app.route('/check_db')
 def check_db():
-    db_file = os.path.join(CONFIG_DIR,'jobs.db')
+    db_file = app.config['DATABASE']
     if not os.path.isfile(db_file):
         logging.info(f'Creating database {db_file} and the jobs table.')
-        create_tables()
+        try:
+            create_tables()
+        except:
+            logging.error(f'Could not create database at {db_file}.')
+            logging.error(f'Call endpoint /check_db to retry recreating the database.')
         return custom_response(f'Created database {db_file}.')
     else:
         logging.info(f'Found database at {db_file}.')
