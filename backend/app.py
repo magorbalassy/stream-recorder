@@ -193,7 +193,8 @@ def check_db():
         except:
             logging.error(f'Could not create database at {db_file}.')
             logging.error(f'Call endpoint /check_db to retry recreating the database.')
-        return custom_response(f'Created database {db_file}.')
+            return f'Failed to create database at {db_file}.'
+        return f'Created database {db_file}.'
     else:
         logging.info(f'Found database at {db_file}.')
         return f'Using database at {db_file}.'
