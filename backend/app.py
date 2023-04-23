@@ -1,15 +1,16 @@
-import json, logging, os, requests, sched, sys, time
-from peewee import *
-from flask import Flask, jsonify, render_template, request
+import json, logging, os, requests, sys, time
 from datetime import datetime
+from flask import Flask, jsonify, render_template, request
+from peewee import *
+from threading import Timer
 
 logging.basicConfig(filename="/dev/stdout", level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.info('==== Starting new run ====')
 
-# Set up scheduler
-scheduler = sched.scheduler(time.time, time.sleep)
+# Job threads array
+job_array = []
 
 app = Flask(__name__)
 
@@ -112,7 +113,6 @@ def save_stream(length, name, url):
 
     time_limit = 10 # time in seconds, for recording
     time_elapsed = 0
-    url="http://tv.id.iptv.uno:80/zS8g4kRjm8318/vC2AsBhqzJ318/88671"
     with requests.Session() as session:
         response = session.get(url, stream=True)
         for chunk in response.iter_content(chunk_size=chunk_size):
@@ -148,6 +148,7 @@ def home():
             "created_on": j.created_on,
             "id": j.id            
         })
+    logging.info('Scheduler: ',scheduler.queue)
     return custom_response(job_list)
 
 
@@ -193,7 +194,8 @@ def check_db():
         except:
             logging.error(f'Could not create database at {db_file}.')
             logging.error(f'Call endpoint /check_db to retry recreating the database.')
-        return custom_response(f'Created database {db_file}.')
+            return f'Failed to create database at {db_file}.'
+        return f'Created database {db_file}.'
     else:
         logging.info(f'Found database at {db_file}.')
         return f'Using database at {db_file}.'
