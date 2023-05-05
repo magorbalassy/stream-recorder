@@ -6,7 +6,7 @@ Schedule video stream recordings on your NAS instead the TV Box.
 https://hub.docker.com/repository/docker/magorbalassy/stream-recorder
 
 Usage:   
-`docker run -p 8888:80 -v /tmp/data:/data -v /tmp/config:/config stream-recorder`
+`docker run -p 8888:80 -v /tmp/data:/data -v /tmp/config:/config magorbalassy/stream-recorder`
 
 ## Configuration
 
