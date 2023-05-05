@@ -17,13 +17,11 @@ export class BackendService {
   }
 
   postJob(job: Job): Observable<number> {
-    console.log('post service');
     const headers = { 'content-type': 'application/json'};
     return this.http.post<number>(this.url, job, {headers});
   }
 
   deleteJob(job: Job): Observable<number> {
-    console.log('delete service');
     const headers = { 'content-type': 'application/json'};
     return this.http.delete<number>(this.url + '/', {headers: headers, body:job});
   }
