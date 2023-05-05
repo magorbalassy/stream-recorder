@@ -55,6 +55,19 @@ app.config['db'] = SqliteDatabase(app.config['DATABASE'])
 app.config['jobs'] = []
 app.config['job_timers'] = {}
 
+# The SQLite model
+class BaseModel(Model):
+    class Meta:
+        database = SqliteDatabase(app.config['DATABASE'])
+        
+class Jobs(BaseModel):
+    filename = TextField()
+    length = IntegerField()
+    url = TextField()
+    status = TextField()
+    start_date = IntegerField()
+    created_on = DateTimeField(default=datetime.now)
+    
 def json_response(msg):
   response = jsonify(msg)
   response.headers.add('Access-Control-Allow-Origin', '*')
@@ -83,7 +96,6 @@ def load_jobs():
         })
         with app.app_context():
             scheduler(j)
-            logging.debug(f'{app.config}')
     return json_jobs
 
 def get_ts():
@@ -97,27 +109,15 @@ def scheduler(j):
             return False
         else:
             start_in_seconds = (j.start_date - now)/1000
-            logging.info(f'Time until schedule: {start_in_seconds} seconds.')
-            t = Timer(start_in_seconds, save_stream, [j.length * 60, j.filename, j.url])
+            logging.info(f'Time until starting job: {start_in_seconds} seconds.')
+            logging.info(f'Job duration: {int(j.length) * 60}')
+            t = Timer(start_in_seconds, save_stream, [int(j.length) * 60, j.filename, j.url])
             t.start()
             with app.app_context():
                 app.config['job_timers'][j.id] = "t"
             logging.info(f'Scheduled job with id {j.id}.')
     else:
         logging.debug(f'Job with {j.id} id is already scheduled.')
-
-# The SQLite model
-class BaseModel(Model):
-    class Meta:
-        database = SqliteDatabase(app.config['DATABASE'])
-        
-class Jobs(BaseModel):
-    filename = TextField()
-    length = IntegerField()
-    url = TextField()
-    status = TextField()
-    start_date = IntegerField()
-    created_on = DateTimeField(default=datetime.now)
 
 # Save to MP4
 def save_stream(duration, name, url):
@@ -126,10 +126,11 @@ def save_stream(duration, name, url):
     if '<datetime>' in name:
         name.replace('<datetime>', time.strftime("%Y%m%d%H%M%S",time.localtime()))
     with open(f'{DATA_DIR}/{name}.mp4', 'wb') as f_out:
-        r = requests.get(url, headers=headers, stream=True)
-        logging.info(f'Starting recording {name}, http response from stream is: ', r)
+        r = requests.get(url, stream=True)
+        logging.info(f'Starting recording {DATA_DIR}/{name}, duration {duration}')
+        logging.info(f'Http response code from stream is: {r.status_code}')
         for chunk in r.iter_content(chunk_size=1024):
-            if time_elapsed > duration:
+            if time_elapsed > int(duration):
                 break
             if chunk:
                 f_out.write(chunk)
@@ -207,4 +208,4 @@ def check_db():
 check_db()
 load_jobs()
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port='5000')
+    app.run(debug=True, host='0.0.0.0', port='5001')
