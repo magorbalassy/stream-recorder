@@ -67,16 +67,26 @@ export class AppComponent implements OnInit{
       let hour = this.time_validator.value.slice(0, 2) as number;
       let minutes = this.time_validator.value.slice(3, 5) as number;
       let start_date = new Date(this.datepicker.value);
-      console.log(start_date);
+      let now = new Date();
+      console.log('dates: ', start_date.valueOf() - now.valueOf() );
+      console.log(':', start_date);
+      console.log(':', now);
+      console.log(':', start_date);
+      console.log(':', now);
       start_date.setHours(hour);
       start_date.setMinutes(minutes);
       start_date.setSeconds(0);
       start_date.setMilliseconds(0);
+      if ( start_date.valueOf() < now.valueOf() ) {
+        this.openSnackBar('Start time is in the past, can\'t schedule.','Close','red-snackbar');
+        return;
+      }
+      console.log(start_date);
       let job = { filename : this.filename,
                 length : this.length_validator.value,
                 url : this.url,
                 status : "new",
-                start_date : start_date.valueOf() - start_date.getTimezoneOffset() * 60000,
+                start_date : start_date.valueOf(),
                 created_on : "",
                 id: 0
                 } as Job;
