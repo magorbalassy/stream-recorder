@@ -13,7 +13,6 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ENV CONFIG_DIR /tmp/config
 
 # Install dependencies
 RUN pip install --upgrade pip
