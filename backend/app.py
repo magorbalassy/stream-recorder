@@ -114,7 +114,7 @@ def scheduler(j):
             t = Timer(start_in_seconds, save_stream, [int(j.length) * 60, j.filename, j.url])
             t.start()
             with app.app_context():
-                app.config['job_timers'][j.id] = "t"
+                app.config['job_timers'][j.id] = t
             logging.info(f'Scheduled job with id {j.id}.')
     else:
         logging.debug(f'Job with {j.id} id is already scheduled.')
