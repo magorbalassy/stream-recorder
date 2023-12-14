@@ -11,14 +11,14 @@ Usage:
 ## Configuration
 
 Container volumes:  
-- `/data` - is the default scrape destionation folder (recordings will end up here). Customizable with environement variable `DATA_DIR`   
+- `/data` - is the default scrape destination folder (recordings will end up here). Customizable with environement variable `DATA_DIR`   
 - `/config` - is the config folder, the SQLite database with recording jobs is kept here, setup with environment variable CONFIG_DIR
 
 Database:  
-The status of the database can be verified by querying the `/check_db` endpoint inside the container, or `/api/check_db` thorugh Nginx (on the host machine). 
+The status of the database can be verified by querying the `/check_db` endpoint inside the container, or `/api/check_db` through Nginx (on the host machine). 
 
 Old jobs:
-- will not be scheduled duriong load 
+- will not be scheduled during load 
 - must be deleted manually, no automatic removal so that URLs can be reused from the UI.
 
 **Mount the required volumes into the container.**
